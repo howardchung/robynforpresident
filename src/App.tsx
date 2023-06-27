@@ -117,10 +117,12 @@ function App() {
     const percentRobyn = countRobyn / Math.max(totalVotes, 1);
     const percentOrlaf = countOrlaf / Math.max(totalVotes, 1);
     let color = (countRobyn > countOrlaf) ? blue : red;
-    if (countRobyn === countOrlaf) {
-      color = 'rgba(96, 96, 96, 0.7)';
+    if (totalVotes === 0) {
+      color = 'rgba(0, 0, 0, 0.0)';
+    } else if (countRobyn === countOrlaf) {
+      color = 'rgba(96, 96, 96, 0.9)';
     }
-    const opacity = 0.3 + (Math.abs(percentRobyn - percentOrlaf) * 0.7);
+    const opacity = 0.4 + (Math.abs(percentRobyn - percentOrlaf) * 0.6);
     const turnout = totalVotes / population;
     return {color, opacity, population, countRobyn, countOrlaf, totalVotes, percentRobyn, percentOrlaf, turnout};
   }, [electionData, popByTent]);
