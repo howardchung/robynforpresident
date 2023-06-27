@@ -120,7 +120,7 @@ function App() {
     if (countRobyn === countOrlaf) {
       color = 'rgba(96, 96, 96, 0.7)';
     }
-    const opacity = 0.5 + (Math.abs(percentRobyn - percentOrlaf) / 2);
+    const opacity = 0.3 + (Math.abs(percentRobyn - percentOrlaf) * 0.7);
     const turnout = totalVotes / population;
     return {color, opacity, population, countRobyn, countOrlaf, totalVotes, percentRobyn, percentOrlaf, turnout};
   }, [electionData, popByTent]);
@@ -247,7 +247,6 @@ function App() {
   const totalVotes = (electionData.overall?.['Robyn'] ?? 0) + (electionData.overall?.['Orlaf'] ?? 0);
   const percentRobyn = (electionData.overall?.['Robyn'] ?? 0) / totalVotes * 100;
   const percentOrlaf = (electionData.overall?.['Orlaf'] ?? 0) / totalVotes * 100;
-  // TODO show projection check
   const maxVotes = voterData.length;
   return (
     <div className="App">
@@ -303,17 +302,19 @@ function App() {
               <th>Location</th>
               <th>Robyn</th>
               <th>Orlaf</th>
+              <th>Turnout</th>
             </tr>
             </thead>
             <tbody>
             {tents.sort().map((tent: google.maps.Polygon) => {
-              const {countOrlaf, countRobyn, color, opacity} = getVisualData(tent.get('campName'));
+              const {countOrlaf, countRobyn, color, opacity, turnout} = getVisualData(tent.get('campName'));
               const bgColor = color.startsWith('rgb(') ? color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`) : color;
               return <tr key={tent.get('campName')}>
                 <td style={{ display: 'flex', gap: '4px' }}><div style={{ height: '20px', width: '20px', flexShrink: 0, backgroundColor: bgColor }}></div>{tent.get('campName')}</td>
                 <td>{tent.get('campLocation')}</td>
                 <td>{countRobyn}</td>
                 <td>{countOrlaf}</td>
+                <td>{(turnout * 100).toFixed(0)}%</td>
               </tr>
             })}
             </tbody>
