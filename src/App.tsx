@@ -40,6 +40,7 @@ function App() {
   useEffect(() => {
     const refresh = async () => {
       const raw = await getElectionData();
+      // TODO test with fake data generator
       // const raw = await getFakeData();
       const electionData: ElectionData = {
         overall: {
@@ -107,12 +108,12 @@ function App() {
       // console.log(map);
       // const georssLayer = new google.maps.KmlLayer({
       //   url:
-      //     "http://azure.howardchung.net:3002/Sunbreak.kml",
+      //     "./Sunbreak.kml",
       //     map,
       //     preserveViewport: true,
       // });
       // console.log(georssLayer);
-      const XMLdata = await (await fetch('http://azure.howardchung.net:3002/Sunbreak.kml')).text();
+      const XMLdata = await (await fetch('./Sunbreak.kml')).text();
       const parser = new XMLParser();
       let jObj = parser.parse(XMLdata);
       console.log(jObj);
