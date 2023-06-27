@@ -11,6 +11,7 @@ const loader = new Loader({
 });
 
 async function getElectionData() {
+  // TODO add a caching layer
   const votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
   return votes;
 }
