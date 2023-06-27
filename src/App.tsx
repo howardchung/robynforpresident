@@ -143,6 +143,7 @@ function App() {
         }
         const population = popByTent[campName];
         // console.log(campName, population);
+        // eslint-disable-next-line
         const countRobyn = electionData.tent[campName]?.Robyn ?? 0;
         const countOrlaf = electionData.tent[campName]?.Orlaf ?? 0;
         const totalVotes = (countRobyn + countOrlaf) ?? 0;
@@ -160,7 +161,7 @@ function App() {
           lat: Number(c[1].trim()),
           lng: Number(c[0].trim()),
         }));
-        const bermudaTriangle = new google.maps.Polygon({
+        const tent = new google.maps.Polygon({
           paths: triangleCoords,
           strokeColor: "#666666",
           strokeOpacity: 0.8,
@@ -168,8 +169,8 @@ function App() {
           fillColor: color,
           fillOpacity: opacity,
         });
-        bermudaTriangle.setMap(map);
-        // Update map data
+        tent.setMap(map);
+        // TODO trigger update of polygons on interval. . . or make it update when electionData updates
         // setInterval(() => {
         //   bermudaTriangle.setOptions({
         //     fillColor: '#0000FF',
@@ -178,7 +179,7 @@ function App() {
         // console.log(triangleCoords);
 
         // Tooltip for each polygon
-        bermudaTriangle.addListener("click", showArrays);
+        tent.addListener("click", showArrays);
 
         let infoWindow = new google.maps.InfoWindow();
 
@@ -217,6 +218,7 @@ function App() {
       }
     });
   });
+  // eslint-disable-next-line
   }, []);
   const totalVotes = (electionData.overall?.['Robyn'] ?? 0) + (electionData.overall?.['Orlaf'] ?? 0);
   const percentRobyn = (electionData.overall?.['Robyn'] ?? 0) / totalVotes * 100;
