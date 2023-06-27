@@ -5,6 +5,8 @@ import {XMLParser} from 'fast-xml-parser';
 import QRCode from "react-qr-code";
 import axios from 'axios';
 
+// TODO add table view
+
 const loader = new Loader({
   apiKey: "AIzaSyCS1nE3eGLvW_D5pAJQ9_iuuoC1lMNJ7ts",
   version: "weekly",
@@ -236,30 +238,30 @@ function App() {
   const maxVotes = voterData.length;
   return (
     <div className="App">
-      <div style={{ display: 'flex', width: '95vw' }}>
+      <div className="mobileStack" style={{ display: 'flex', width: '95vw' }}>
         <div>
-          <h2>Sunbreak Presidential Election 2023</h2>
-          <h3>Polls close in <span>{timerComponents}</span></h3>
+          <div className="is-size-2">Sunbreak Presidential Election 2023</div>
+          <div className="is-size-3">Polls close in <span>{timerComponents}</span></div>
         </div>
         <div style={{ display: 'flex', marginLeft: 'auto'}}>
-          <div style={{ fontWeight: 700, marginRight: '8px' }}>Vote:</div>
+          <div className="is-size-4" style={{ fontWeight: 700, marginRight: '8px' }}>Vote:</div>
           <QRCode size={120} value="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform"></QRCode>
         </div>
       </div>
       {/* <pre>{JSON.stringify(electionData, null, 2)}</pre> */}
-      <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', width: 'calc(80vw + 200px)'}}>
+      <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px'}}>
         <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', backgroundImage: 'url(./robyn.jpg)', backgroundSize: 'contain' }}></div>
-        <div style={{ display: 'flex', flexDirection: 'column', width: '80vw' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: 'calc(90vw - 200px)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div style={{ width: '120px' }}>
+            <div className="mobileStack mobileReverse" style={{ width: '10vw' }}>
               <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 48, marginRight: 8, fontWeight: 700 }}>{electionData.overall?.['Robyn']?.toFixed(0) ?? 0}</span>
               <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 24, fontWeight: 500 }}>Robyn</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'end',  fontWeight: 700 }}>
-              <div>50% to win</div>
+              <div style={{ textAlign: 'center' }}>50% to win</div>
               <div>▼</div>
             </div>
-            <div style={{ width: '120px' }}>
+            <div className="mobileStack" style={{ width: '10vw' }}>
               <span style={{ color: 'rgb(255, 74, 67)', textTransform: 'uppercase', fontSize: 24, marginRight: 8, fontWeight: 500 }}>Orlaf</span>
               <span style={{ color: 'rgb(255, 74, 67)', textTransform: 'uppercase', fontSize: 48, fontWeight: 700 }}>{electionData.overall?.['Orlaf']?.toFixed(0) ?? 0}</span>
             </div>
