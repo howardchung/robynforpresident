@@ -6,12 +6,40 @@ import QRCode from "react-qr-code";
 import axios from 'axios';
 import React from 'react';
 
+// TODO final run of camping data
+// TODO final run of voting data
+
+const gradient = [
+  'rgb(26, 106, 255)',
+  'rgb(122, 94, 243)',
+  'rgb(167, 80, 227)',
+  'rgb(200, 64, 207)',
+  'rgb(225, 46, 184)',
+  'rgb(242, 30, 161)',
+  'rgb(253, 25, 136)',
+  'rgb(255, 36, 112)',
+  'rgb(255, 55, 89)',
+  'rgb(255, 74, 67)',
+        ];
+const blue = gradient[0];
+const red = gradient[9];
+
 const loader = new Loader({
   apiKey: "AIzaSyCS1nE3eGLvW_D5pAJQ9_iuuoC1lMNJ7ts",
   version: "weekly",
 });
 
+const getFakeData = async () => {
+  const resp = await axios.get('./fakeVotes.json');
+  const timestamp = Math.floor(Date.now() / 1000);
+  const mod = timestamp % 1000;
+  return { values: resp.data.slice(0, 500 + mod / 2) };
+};
+
 async function getElectionData() {
+  if (window.location.search.includes('fakeData')) {
+    return await getFakeData();
+  }
   // TODO add a caching layer
   const votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
   return votes;
@@ -35,13 +63,6 @@ function App() {
   // const [polygons, setPolygons] = useState([]);
   const [tents, setTents] = useState([]);
 
-  // eslint-disable-next-line
-  const getFakeData = async () => {
-    const resp = await axios.get('./fakeVotes.json');
-    const timestamp = Math.floor(Date.now() / 1000);
-    const mod = timestamp % 1000;
-    return { values: resp.data.slice(0, 500 + mod / 2) };
-  };
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -55,9 +76,7 @@ function App() {
 
   useEffect(() => {
     const refresh = async () => {
-      // TODO test with fake data generator
       const raw = await getElectionData();
-      // const raw = await getFakeData();
       console.log(raw);
       setRaw(raw.values.slice(1));
     };
@@ -96,20 +115,6 @@ function App() {
   }, [raw, popByTent, voterData]);
 
   const getVisualData = useCallback((campName: string) => {
-    const gradient = [
-      'rgb(26, 106, 255)',
-      'rgb(122, 94, 243)',
-      'rgb(167, 80, 227)',
-      'rgb(200, 64, 207)',
-      'rgb(225, 46, 184)',
-      'rgb(242, 30, 161)',
-      'rgb(253, 25, 136)',
-      'rgb(255, 36, 112)',
-      'rgb(255, 55, 89)',
-      'rgb(255, 74, 67)',
-            ];
-    const blue = gradient[0];
-    const red = gradient[9];
     const population = popByTent[campName];
     const countRobyn = electionData.tent[campName]?.Robyn ?? 0;
     const countOrlaf = electionData.tent[campName]?.Orlaf ?? 0;
@@ -119,7 +124,7 @@ function App() {
     let color = (countRobyn > countOrlaf) ? blue : red;
     if (totalVotes === 0) {
       color = 'rgba(0, 0, 0, 0.0)';
-    } else if (countRobyn === countOrlaf) {
+    } else if (Math.abs(percentRobyn - percentOrlaf) < 0.1) {
       color = 'rgba(96, 96, 96, 0.9)';
     }
     const opacity = 0.4 + (Math.abs(percentRobyn - percentOrlaf) * 0.6);
@@ -309,14 +314,14 @@ function App() {
             </thead>
             <tbody>
             {tents.sort().map((tent: google.maps.Polygon) => {
-              const {countOrlaf, countRobyn, color, opacity, turnout} = getVisualData(tent.get('campName'));
+              const {countOrlaf, countRobyn, percentRobyn, percentOrlaf, color, opacity, turnout} = getVisualData(tent.get('campName'));
               const bgColor = color.startsWith('rgb(') ? color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`) : color;
               return <tr key={tent.get('campName')}>
                 <td style={{ display: 'flex', gap: '4px' }}><div style={{ height: '20px', width: '20px', flexShrink: 0, backgroundColor: bgColor }}></div>{tent.get('campName')}</td>
                 <td>{tent.get('campLocation')}</td>
-                <td>{countRobyn}</td>
-                <td>{countOrlaf}</td>
-                <td>{(turnout * 100).toFixed(0)}%</td>
+                <td>{countRobyn}<div style={{backgroundColor: blue, width: percentRobyn * 100 + '%', height: '6px'}}></div></td>
+                <td>{countOrlaf}<div style={{backgroundColor: red, width: percentOrlaf * 100 + '%', height: '6px' }}></div></td>
+                <td>{(turnout * 100).toFixed(0)}%<div style={{backgroundColor: '#666666', width: turnout * 100 + '%', height: '6px' }}></div></td>
               </tr>
             })}
             </tbody>
