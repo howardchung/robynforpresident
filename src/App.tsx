@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { Loader } from "@googlemaps/js-api-loader";
 import {XMLParser} from 'fast-xml-parser';
@@ -40,6 +40,7 @@ function App() {
   useEffect(() => {
     const refresh = async () => {
       const raw = await getElectionData();
+      console.log(raw);
       // TODO test with fake data generator
       // const raw = await getFakeData();
       const electionData: ElectionData = {
@@ -49,7 +50,6 @@ function App() {
         }
       }
       raw.values?.slice(1).forEach((value: string[]) => {
-        console.log(value);
         if (!electionData.overall?.[value[2]]) {
           electionData.overall[value[2]] = 0;
         }
@@ -68,6 +68,44 @@ function App() {
     setInterval(refresh, 10000);
   }, []);
 
+  useEffect(() => {
+    tents.forEach((tent: google.maps.Polygon) => {
+      const campName  = tent.get('campName');
+      // console.log('refresh', campName);
+      const {color, opacity} = getVisualData(campName);
+      // console.log(tent, color, opacity);
+      tent.setOptions({
+        fillColor: color,
+        fillOpacity: opacity,
+      });
+
+      const {percentRobyn, percentOrlaf, countRobyn, countOrlaf, turnout} = getVisualData(campName);
+
+      let contentString =
+        `<div style="font-size: 20px;margin-bottom: 10px">${campName} (pop. ${(popByTent[campName])?.toFixed(0)})</div>` +
+        `<table style="font-size: 16px;border-spacing: 0;margin-bottom: 10px;">
+        <tr>
+          <th style="border-bottom: 1px solid rgb(230, 230, 230);">Candidate</th>
+          <th style="border-bottom: 1px solid rgb(230, 230, 230);">%</th>
+          <th style="border-bottom: 1px solid rgb(230, 230, 230);">Votes</th>
+        </tr>
+        <tr>
+          <td><div style="display:flex;gap:4px;align-items:center;"><div style="width: 14px;height: 14px;border-radius:50%;background-color:rgb(26, 106, 255);"></div>Robyn</div></td>
+          <td>${(percentRobyn * 100).toFixed(1)}%</td>
+          <td style="text-align:right;">${(countRobyn).toFixed(0)}</td>
+        </tr>
+        <tr>
+          <td><div style="display:flex;gap:4px;align-items:center;"><div style="width: 14px;height: 14px;border-radius:50%;background-color:rgb(255, 74, 67);"></div>Orlaf</div></td>
+          <td>${(percentOrlaf * 100).toFixed(1)}%</td>
+          <td style="text-align:right;">${(countOrlaf).toFixed(0)}</td>
+        </tr>
+        </table>` +
+        `<div style="font-size: 14px;font-weight:700;">${(turnout * 100).toFixed(0)}% in</div>`;
+            
+      tent.set('contentString', contentString);
+    });
+  }, [electionData]);
+
   const timerComponents = Object.keys(timeLeft).map(interval => {
     if (!timeLeft[interval]) {
       return null;
@@ -82,8 +120,40 @@ function App() {
 
   // const [campingData, setCampingData] = useState([]);
   const [voterData, setVoterData] = useState([]);
-  // const [popByTent, setPopByTent] = useState({});
+  const [popByTent, setPopByTent] = useState<{[key: string]: number}>({});
   // const [polygons, setPolygons] = useState([]);
+  const [tents, setTents] = useState([]);
+
+  const gradient = [
+    'rgb(26, 106, 255)',
+    'rgb(122, 94, 243)',
+    'rgb(167, 80, 227)',
+    'rgb(200, 64, 207)',
+    'rgb(225, 46, 184)',
+    'rgb(242, 30, 161)',
+    'rgb(253, 25, 136)',
+    'rgb(255, 36, 112)',
+    'rgb(255, 55, 89)',
+    'rgb(255, 74, 67)',
+          ];
+  const blue = gradient[0];
+  const red = gradient[9];
+
+  const getVisualData = (campName: string) => {
+    const population = popByTent[campName];
+    const countRobyn = electionData.tent[campName]?.Robyn ?? 0;
+    const countOrlaf = electionData.tent[campName]?.Orlaf ?? 0;
+    const totalVotes = (countRobyn + countOrlaf) ?? 0;
+    const percentRobyn = countRobyn / Math.max(totalVotes, 1);
+    const percentOrlaf = countOrlaf / Math.max(totalVotes, 1);
+    let color = (countRobyn > countOrlaf) ? blue : red;
+    if (countRobyn === countOrlaf) {
+      color = '#666666';
+    }
+    const opacity = 0.5 + (Math.abs(percentRobyn - percentOrlaf) / 2);
+    const turnout = totalVotes / population;
+    return {color, opacity, population, countRobyn, countOrlaf, totalVotes, percentRobyn, percentOrlaf, turnout};
+  };
 
   useEffect(() => {
     loader.load().then(async () => {
@@ -98,7 +168,7 @@ function App() {
         }
         popByTent[voter[0]] += 1;
       });
-      // setPopByTent(popByTent);
+      setPopByTent(popByTent);
 
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
       let map = new Map(document.getElementById("map") as HTMLElement, {
@@ -116,108 +186,48 @@ function App() {
       const XMLdata = await (await fetch('./Sunbreak.kml')).text();
       const parser = new XMLParser();
       let jObj = parser.parse(XMLdata);
-      console.log(jObj);
-      console.log(jObj.kml.Document.Folder[3].Placemark);
+      // console.log(jObj);
+      // console.log(jObj.kml.Document.Folder[3].Placemark);
       const polygons = jObj.kml.Document.Folder[3].Placemark;
       // setPolygons(polygons);
 
-      const gradient = [
-'rgb(26, 106, 255)',
-'rgb(122, 94, 243)',
-'rgb(167, 80, 227)',
-'rgb(200, 64, 207)',
-'rgb(225, 46, 184)',
-'rgb(242, 30, 161)',
-'rgb(253, 25, 136)',
-'rgb(255, 36, 112)',
-'rgb(255, 55, 89)',
-'rgb(255, 74, 67)',
-      ];
-      const blue = gradient[0];
-      const red = gradient[9];
-      polygons.forEach((p: any) => {
-        const location = p.name;
-        // lookup camp name using camp location. polygon's "name" is e.g. SE 12
-        const campName = campingData.find((camp: string[]) => camp[1] === location)?.[0];
-        if (!campName) {
-          return;
-        }
-        const population = popByTent[campName];
-        // console.log(campName, population);
-        // eslint-disable-next-line
-        const countRobyn = electionData.tent[campName]?.Robyn ?? 0;
-        const countOrlaf = electionData.tent[campName]?.Orlaf ?? 0;
-        const totalVotes = (countRobyn + countOrlaf) ?? 0;
-        const percentRobyn = countRobyn / Math.max(totalVotes, 1);
-        const percentOrlaf = countOrlaf / Math.max(totalVotes, 1);
-        const turnout = totalVotes / population;
-        let color = (countRobyn > countOrlaf) ? blue : red;
-        if (countRobyn === countOrlaf) {
-          color = '#666666';
-        }
-        const opacity = 0.5 + (Math.abs(percentRobyn - percentOrlaf) / 2);
-        const coords = p.Polygon.outerBoundaryIs.LinearRing.coordinates;
-        const coordsArray = coords.split('\n').map((c: any) => c.split(','));
-        const triangleCoords: google.maps.LatLngLiteral[] = coordsArray.map((c: string[]) => ({
-          lat: Number(c[1].trim()),
-          lng: Number(c[0].trim()),
-        }));
-        const tent = new google.maps.Polygon({
-          paths: triangleCoords,
-          strokeColor: "#666666",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: color,
-          fillOpacity: opacity,
-        });
-        tent.setMap(map);
-        // TODO trigger update of polygons on interval. . . or make it update when electionData updates
-        // setInterval(() => {
-        //   bermudaTriangle.setOptions({
-        //     fillColor: '#0000FF',
-        //   });
-        // }, 5000);
-        // console.log(triangleCoords);
-
-        // Tooltip for each polygon
-        tent.addListener("click", showArrays);
-
-        let infoWindow = new google.maps.InfoWindow();
-
-        function showArrays(event: any) {
-          // Since this polygon has only one path, we can call getPath() to return the
-          // MVCArray of LatLngs.
-          // @ts-ignore
-          // const polygon = this as google.maps.Polygon;
-          // const vertices = polygon.getPath();
-        
-          let contentString =
-            `<div style="font-size: 20px;margin-bottom: 10px">${campName} (pop. ${(popByTent[campName])?.toFixed(0)})</div>` +
-            `<table style="font-size: 16px;border-spacing: 0;margin-bottom: 10px;">
-            <tr>
-              <th style="border-bottom: 1px solid rgb(230, 230, 230);">Candidate</th>
-              <th style="border-bottom: 1px solid rgb(230, 230, 230);">%</th>
-              <th style="border-bottom: 1px solid rgb(230, 230, 230);">Votes</th>
-            </tr>
-            <tr>
-              <td><div style="display:flex;gap:4px;align-items:center;"><div style="width: 14px;height: 14px;border-radius:50%;background-color:rgb(26, 106, 255);"></div>Robyn</div></td>
-              <td>${(percentRobyn * 100).toFixed(1)}%</td>
-              <td style="text-align:right;">${(countRobyn).toFixed(0)}</td>
-            </tr>
-            <tr>
-              <td><div style="display:flex;gap:4px;align-items:center;"><div style="width: 14px;height: 14px;border-radius:50%;background-color:rgb(255, 74, 67);"></div>Orlaf</div></td>
-              <td>${(percentOrlaf * 100).toFixed(1)}%</td>
-              <td style="text-align:right;">${(countOrlaf).toFixed(0)}</td>
-            </tr>
-            </table>` +
-            `<div style="font-size: 14px;font-weight:700;">${(turnout * 100).toFixed(0)}% in</div>`;
-                // Replace the info window's content and position.
-  infoWindow.setContent(contentString);
-  infoWindow.setPosition(event.latLng);
-
-  infoWindow.open(map);
-      }
-    });
+              const tents = polygons.map((p: any) => {
+                const location = p.name;
+                // lookup camp name using camp location. polygon's "name" is e.g. SE 12
+                const campName = campingData.find((camp: string[]) => camp[1] === location)?.[0];
+                if (!campName) {
+                  return null;
+                }
+                const coords = p.Polygon.outerBoundaryIs.LinearRing.coordinates;
+                const coordsArray = coords.split('\n').map((c: any) => c.split(','));
+                const triangleCoords: google.maps.LatLngLiteral[] = coordsArray.map((c: string[]) => ({
+                  lat: Number(c[1].trim()),
+                  lng: Number(c[0].trim()),
+                }));
+                const tent = new google.maps.Polygon({
+                  paths: triangleCoords,
+                  strokeColor: "#666666",
+                  strokeOpacity: 0.8,
+                  strokeWeight: 2,
+                  // fillColor: color,
+                  // fillOpacity: opacity,
+                });
+                tent.set('campName', campName);
+                tent.setMap(map);
+                
+      // Tooltip for each polygon
+      let infoWindow = new google.maps.InfoWindow();
+      const showArrays = (event: any) => {
+        infoWindow.setContent(tent.get('contentString'));
+        infoWindow.setPosition(event.latLng);
+        infoWindow.open(map);
+      };
+      tent.addListener("click", showArrays);
+      // tent.set('handle', handle);
+      // tent.set('map', map); 
+      return tent;
+      }).filter(Boolean);
+      setTents(tents);
   });
   // eslint-disable-next-line
   }, []);
