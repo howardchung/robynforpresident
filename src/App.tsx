@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { Loader } from "@googlemaps/js-api-loader";
 import {XMLParser} from 'fast-xml-parser';
@@ -27,6 +27,11 @@ function App() {
     overall: {},
     tent: {},
   });
+  // const [campingData, setCampingData] = useState([]);
+  const [voterData, setVoterData] = useState([]);
+  const [popByTent, setPopByTent] = useState<{[key: string]: number}>({});
+  // const [polygons, setPolygons] = useState([]);
+  const [tents, setTents] = useState([]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -69,6 +74,36 @@ function App() {
     setInterval(refresh, 10000);
   }, []);
 
+  const getVisualData = useCallback((campName: string) => {
+    const gradient = [
+      'rgb(26, 106, 255)',
+      'rgb(122, 94, 243)',
+      'rgb(167, 80, 227)',
+      'rgb(200, 64, 207)',
+      'rgb(225, 46, 184)',
+      'rgb(242, 30, 161)',
+      'rgb(253, 25, 136)',
+      'rgb(255, 36, 112)',
+      'rgb(255, 55, 89)',
+      'rgb(255, 74, 67)',
+            ];
+    const blue = gradient[0];
+    const red = gradient[9];
+    const population = popByTent[campName];
+    const countRobyn = electionData.tent[campName]?.Robyn ?? 0;
+    const countOrlaf = electionData.tent[campName]?.Orlaf ?? 0;
+    const totalVotes = (countRobyn + countOrlaf) ?? 0;
+    const percentRobyn = countRobyn / Math.max(totalVotes, 1);
+    const percentOrlaf = countOrlaf / Math.max(totalVotes, 1);
+    let color = (countRobyn > countOrlaf) ? blue : red;
+    if (countRobyn === countOrlaf) {
+      color = '#666666';
+    }
+    const opacity = 0.5 + (Math.abs(percentRobyn - percentOrlaf) / 2);
+    const turnout = totalVotes / population;
+    return {color, opacity, population, countRobyn, countOrlaf, totalVotes, percentRobyn, percentOrlaf, turnout};
+  }, [electionData, popByTent]);
+
   useEffect(() => {
     tents.forEach((tent: google.maps.Polygon) => {
       const campName  = tent.get('campName');
@@ -105,7 +140,7 @@ function App() {
             
       tent.set('contentString', contentString);
     });
-  }, [electionData]);
+  }, [electionData, getVisualData, popByTent, tents]);
 
   const timerComponents = Object.keys(timeLeft).map(interval => {
     if (!timeLeft[interval]) {
@@ -118,43 +153,6 @@ function App() {
       </span>
     )
   });
-
-  // const [campingData, setCampingData] = useState([]);
-  const [voterData, setVoterData] = useState([]);
-  const [popByTent, setPopByTent] = useState<{[key: string]: number}>({});
-  // const [polygons, setPolygons] = useState([]);
-  const [tents, setTents] = useState([]);
-
-  const gradient = [
-    'rgb(26, 106, 255)',
-    'rgb(122, 94, 243)',
-    'rgb(167, 80, 227)',
-    'rgb(200, 64, 207)',
-    'rgb(225, 46, 184)',
-    'rgb(242, 30, 161)',
-    'rgb(253, 25, 136)',
-    'rgb(255, 36, 112)',
-    'rgb(255, 55, 89)',
-    'rgb(255, 74, 67)',
-          ];
-  const blue = gradient[0];
-  const red = gradient[9];
-
-  const getVisualData = (campName: string) => {
-    const population = popByTent[campName];
-    const countRobyn = electionData.tent[campName]?.Robyn ?? 0;
-    const countOrlaf = electionData.tent[campName]?.Orlaf ?? 0;
-    const totalVotes = (countRobyn + countOrlaf) ?? 0;
-    const percentRobyn = countRobyn / Math.max(totalVotes, 1);
-    const percentOrlaf = countOrlaf / Math.max(totalVotes, 1);
-    let color = (countRobyn > countOrlaf) ? blue : red;
-    if (countRobyn === countOrlaf) {
-      color = '#666666';
-    }
-    const opacity = 0.5 + (Math.abs(percentRobyn - percentOrlaf) / 2);
-    const turnout = totalVotes / population;
-    return {color, opacity, population, countRobyn, countOrlaf, totalVotes, percentRobyn, percentOrlaf, turnout};
-  };
 
   useEffect(() => {
     loader.load().then(async () => {
@@ -230,7 +228,6 @@ function App() {
       }).filter(Boolean);
       setTents(tents);
   });
-  // eslint-disable-next-line
   }, []);
   const totalVotes = (electionData.overall?.['Robyn'] ?? 0) + (electionData.overall?.['Orlaf'] ?? 0);
   const percentRobyn = (electionData.overall?.['Robyn'] ?? 0) / totalVotes * 100;
