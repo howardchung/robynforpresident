@@ -258,7 +258,7 @@ function App() {
           <div className="is-size-4">Polls close in <span>{timerComponents}</span></div>
         </div>
         <div style={{ display: 'flex', marginLeft: 'auto'}}>
-          <a target="_blank" href="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform" className="is-size-4" style={{ fontWeight: 700, marginRight: '8px' }}>Vote:</a>
+          <a rel="noreferrer" target="_blank" href="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform" className="is-size-4" style={{ fontWeight: 700, marginRight: '8px' }}>Vote:</a>
           <QRCode size={100} value="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform"></QRCode>
         </div>
       </div>
