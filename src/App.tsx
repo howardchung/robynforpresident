@@ -56,8 +56,8 @@ function App() {
   useEffect(() => {
     const refresh = async () => {
       // TODO test with fake data generator
-      // const raw = await getElectionData();
-      const raw = await getFakeData();
+      const raw = await getElectionData();
+      // const raw = await getFakeData();
       console.log(raw);
       setRaw(raw.values.slice(1));
     };
