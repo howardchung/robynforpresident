@@ -2107,7 +2107,7 @@
         </Polygon>
       </Placemark>
       <Placemark>
-        <name>South 41</name>
+        <name>South 40</name>
         <styleUrl>#poly-000000-2000-77-nodesc</styleUrl>
         <Polygon>
           <outerBoundaryIs>
@@ -2125,7 +2125,7 @@
         </Polygon>
       </Placemark>
       <Placemark>
-        <name>South 45</name>
+        <name>South 41</name>
         <styleUrl>#poly-000000-2000-77-nodesc</styleUrl>
         <Polygon>
           <outerBoundaryIs>

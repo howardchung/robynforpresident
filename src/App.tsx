@@ -4,8 +4,7 @@ import { Loader } from "@googlemaps/js-api-loader";
 import {XMLParser} from 'fast-xml-parser';
 import QRCode from "react-qr-code";
 import axios from 'axios';
-
-// TODO add table view
+import React from 'react';
 
 const loader = new Loader({
   apiKey: "AIzaSyCS1nE3eGLvW_D5pAJQ9_iuuoC1lMNJ7ts",
@@ -25,6 +24,7 @@ type ElectionData = {
 
 function App() {
   const [timeLeft, setTimeLeft] = useState<any>(calculateTimeLeft());
+  const [raw, setRaw] = useState([]);
   const [electionData, setElectionData] = useState<ElectionData>({
     overall: {},
     tent: {},
@@ -34,6 +34,14 @@ function App() {
   const [popByTent, setPopByTent] = useState<{[key: string]: number}>({});
   // const [polygons, setPolygons] = useState([]);
   const [tents, setTents] = useState([]);
+
+  // eslint-disable-next-line
+  const getFakeData = async () => {
+    const resp = await axios.get('./fakeVotes.json');
+    const timestamp = Math.floor(Date.now() / 1000);
+    const mod = timestamp % 1000;
+    return { values: resp.data.slice(0, 500 + mod / 2) };
+  };
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -47,34 +55,45 @@ function App() {
 
   useEffect(() => {
     const refresh = async () => {
-      const raw = await getElectionData();
-      console.log(raw);
       // TODO test with fake data generator
-      // const raw = await getFakeData();
-      const electionData: ElectionData = {
-        overall: {
-        },
-        tent: {
-        }
-      }
-      raw.values?.slice(1).forEach((value: string[]) => {
-        if (!electionData.overall?.[value[2]]) {
-          electionData.overall[value[2]] = 0;
-        }
-        // TODO cap the overall count at 100% of voters
-        electionData.overall[value[2]] += 1;
-        if (!electionData.tent?.[value[1]]?.[value[2]]) {
-          electionData.tent[value[1]] = {};
-          electionData.tent[value[1]][value[2]] = 0;
-        }
-        // TODO cap the tent count at 100% of voters
-        electionData.tent[value[1]][value[2]] += 1;
-      });
-      setElectionData(electionData);
+      // const raw = await getElectionData();
+      const raw = await getFakeData();
+      console.log(raw);
+      setRaw(raw.values.slice(1));
     };
     refresh();
     setInterval(refresh, 10000);
   }, []);
+
+  useEffect(() => {
+    const electionData: ElectionData = {
+      overall: {
+      },
+      tent: {
+      }
+    }
+    raw.forEach((value: string[], i) => {
+      if (!electionData.overall?.[value[2]]) {
+        electionData.overall[value[2]] = 0;
+      }
+      // cap the overall count at 100% of voters
+      if (i < voterData.length) {
+        electionData.overall[value[2]] += 1;
+      }
+      if (!electionData.tent?.[value[1]]) {
+        electionData.tent[value[1]] = {};
+      }
+      if (!electionData.tent?.[value[1]]?.[value[2]]) {
+        electionData.tent[value[1]][value[2]] = 0;
+      }
+      // cap the tent count at 100% of tent
+      if (electionData.tent[value[1]][value[2]] < popByTent[value[1]]) {
+        electionData.tent[value[1]][value[2]] += 1;
+      }
+    });
+    console.log(electionData);
+    setElectionData(electionData);
+  }, [raw, popByTent, voterData]);
 
   const getVisualData = useCallback((campName: string) => {
     const gradient = [
@@ -99,7 +118,7 @@ function App() {
     const percentOrlaf = countOrlaf / Math.max(totalVotes, 1);
     let color = (countRobyn > countOrlaf) ? blue : red;
     if (countRobyn === countOrlaf) {
-      color = '#666666';
+      color = 'rgba(96, 96, 96, 0.7)';
     }
     const opacity = 0.5 + (Math.abs(percentRobyn - percentOrlaf) / 2);
     const turnout = totalVotes / population;
@@ -121,7 +140,8 @@ function App() {
 
       let contentString =
         `<div style="font-size: 20px;margin-bottom: 10px">${campName} (pop. ${(popByTent[campName])?.toFixed(0)})</div>` +
-        `<table style="font-size: 16px;border-spacing: 0;margin-bottom: 10px;">
+        `<div style="font-size: 14px;margin-bottom: 10px">${tent.get('campLocation')}</div>` +
+        `<table style="font-size: 16px;border-spacing: 0;margin-bottom: 10px; width: 100%;">
         <tr>
           <th style="border-bottom: 1px solid rgb(230, 230, 230);">Candidate</th>
           <th style="border-bottom: 1px solid rgb(230, 230, 230);">%</th>
@@ -173,17 +193,9 @@ function App() {
 
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
       let map = new Map(document.getElementById("map") as HTMLElement, {
-        center: { lat: 47.90503556127053, lng: -122.08485859514236 },
-        zoom: 18,
+        center: { lat: 47.90503556127053, lng: -122.08425859514236 },
+        zoom: 18.0,
       });
-      // console.log(map);
-      // const georssLayer = new google.maps.KmlLayer({
-      //   url:
-      //     "./Sunbreak.kml",
-      //     map,
-      //     preserveViewport: true,
-      // });
-      // console.log(georssLayer);
       const XMLdata = await (await fetch('./Sunbreak.kml')).text();
       const parser = new XMLParser();
       let jObj = parser.parse(XMLdata);
@@ -192,29 +204,30 @@ function App() {
       const polygons = jObj.kml.Document.Folder[3].Placemark;
       // setPolygons(polygons);
 
-              const tents = polygons.map((p: any) => {
-                const location = p.name;
-                // lookup camp name using camp location. polygon's "name" is e.g. SE 12
-                const campName = campingData.find((camp: string[]) => camp[1] === location)?.[0];
-                if (!campName) {
-                  return null;
-                }
-                const coords = p.Polygon.outerBoundaryIs.LinearRing.coordinates;
-                const coordsArray = coords.split('\n').map((c: any) => c.split(','));
-                const triangleCoords: google.maps.LatLngLiteral[] = coordsArray.map((c: string[]) => ({
-                  lat: Number(c[1].trim()),
-                  lng: Number(c[0].trim()),
-                }));
-                const tent = new google.maps.Polygon({
-                  paths: triangleCoords,
-                  strokeColor: "#666666",
-                  strokeOpacity: 0.8,
-                  strokeWeight: 2,
-                  // fillColor: color,
-                  // fillOpacity: opacity,
-                });
-                tent.set('campName', campName);
-                tent.setMap(map);
+        const tents = polygons.map((p: any) => {
+          const location = p.name;
+          // lookup camp name using camp location. polygon's "name" is e.g. SE 12
+          const campName = campingData.find((camp: string[]) => camp[1] === location)?.[0];
+          if (!campName) {
+            return null;
+          }
+          const coords = p.Polygon.outerBoundaryIs.LinearRing.coordinates;
+          const coordsArray = coords.split('\n').map((c: any) => c.split(','));
+          const triangleCoords: google.maps.LatLngLiteral[] = coordsArray.map((c: string[]) => ({
+            lat: Number(c[1].trim()),
+            lng: Number(c[0].trim()),
+          }));
+          const tent = new google.maps.Polygon({
+            paths: triangleCoords,
+            strokeColor: "#666666",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            // fillColor: color,
+            // fillOpacity: opacity,
+          });
+          tent.set('campName', campName);
+          tent.set('campLocation', location);
+          tent.setMap(map);
                 
       // Tooltip for each polygon
       let infoWindow = new google.maps.InfoWindow();
@@ -241,31 +254,31 @@ function App() {
       <div className="mobileStack" style={{ display: 'flex', width: '95vw' }}>
         <div>
           <div className="is-size-2">Sunbreak Presidential Election 2023</div>
-          <div className="is-size-3">Polls close in <span>{timerComponents}</span></div>
+          <div className="is-size-4">Polls close in <span>{timerComponents}</span></div>
         </div>
         <div style={{ display: 'flex', marginLeft: 'auto'}}>
           <div className="is-size-4" style={{ fontWeight: 700, marginRight: '8px' }}>Vote:</div>
-          <QRCode size={120} value="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform"></QRCode>
+          <QRCode size={100} value="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform"></QRCode>
         </div>
       </div>
       {/* <pre>{JSON.stringify(electionData, null, 2)}</pre> */}
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px'}}>
-        <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', backgroundImage: 'url(./robyn.jpg)', backgroundSize: 'contain' }}></div>
-        <div style={{ display: 'flex', flexDirection: 'column', width: 'calc(90vw - 200px)' }}>
+        <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', maxWidth: '10vw', maxHeight: '10vw', backgroundImage: 'url(./robyn.jpg)', backgroundSize: 'contain' }}></div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: 'calc(90vw - 20vw)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div className="mobileStack mobileReverse" style={{ width: '10vw' }}>
+            <div className="mobileStack mobileReverse" style={{ }}>
               <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 48, marginRight: 8, fontWeight: 700 }}>{electionData.overall?.['Robyn']?.toFixed(0) ?? 0}</span>
               <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 24, fontWeight: 500 }}>Robyn</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'end',  fontWeight: 700 }}>
-              <div style={{ textAlign: 'center' }}>50% to win</div>
-              <div>▼</div>
-            </div>
-            <div className="mobileStack" style={{ width: '10vw' }}>
+            <div className="mobileStack" style={{ textAlign: 'right' }}>
               <span style={{ color: 'rgb(255, 74, 67)', textTransform: 'uppercase', fontSize: 24, marginRight: 8, fontWeight: 500 }}>Orlaf</span>
               <span style={{ color: 'rgb(255, 74, 67)', textTransform: 'uppercase', fontSize: 48, fontWeight: 700 }}>{electionData.overall?.['Orlaf']?.toFixed(0) ?? 0}</span>
             </div>
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '-50px' }}>
+          <div style={{ textAlign: 'center' }}>50% to win</div>
+          <div>▼</div>
+        </div>
           <div style={{ position: 'relative', justifyContent: 'center', display: 'flex', backgroundColor: 'gray', width: '100%', height: '30px', borderRadius: '4px' }}>
             <div style={{ width: '1px', height: '30px', margin: '0 auto', position: 'absolute', zIndex: 2, backgroundColor: 'black' }}>
             </div>
@@ -278,10 +291,35 @@ function App() {
           <div style={{fontWeight: 700}}>{(percentOrlaf).toFixed(1)}%</div>
           </div>
         </div>
-        <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', backgroundImage: 'url(./orlaf.jpg)', backgroundSize: 'contain' }}></div>
+        <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', maxWidth: '10vw', maxHeight: '10vw', backgroundImage: 'url(./orlaf.jpg)', backgroundSize: 'contain' }}></div>
       </div>
-      <hr />
-      <div style={{width: "100vw", height: '65vh'}} id="map" />
+      <div className="mobileStack" style={{ display: 'flex', marginTop: '10px' }}>
+        <div style={{width: "65vw", minWidth: '350px', height: '67vh'}} id="map" />
+        <div style={{width: "35vw", minWidth: '350px', height: '67vh', overflowY: 'scroll'}} id="table">
+          <table className="table is-bordered" style={{ fontWeight: 400 }}>
+            <thead>
+            <tr>
+              <th>Tent</th>
+              <th>Location</th>
+              <th>Robyn</th>
+              <th>Orlaf</th>
+            </tr>
+            </thead>
+            <tbody>
+            {tents.sort().map((tent: google.maps.Polygon) => {
+              const {countOrlaf, countRobyn, color, opacity} = getVisualData(tent.get('campName'));
+              const bgColor = color.startsWith('rgb(') ? color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`) : color;
+              return <tr key={tent.get('campName')}>
+                <td style={{ display: 'flex', gap: '4px' }}><div style={{ height: '20px', width: '20px', flexShrink: 0, backgroundColor: bgColor }}></div>{tent.get('campName')}</td>
+                <td>{tent.get('campLocation')}</td>
+                <td>{countRobyn}</td>
+                <td>{countOrlaf}</td>
+              </tr>
+            })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
