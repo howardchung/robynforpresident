@@ -6,7 +6,6 @@ import QRCode from "react-qr-code";
 import axios from 'axios';
 import React from 'react';
 
-// TODO final run of camping data
 // TODO final run of voting data
 
 const gradient = [
@@ -78,7 +77,7 @@ function App() {
     const refresh = async () => {
       const raw = await getElectionData();
       console.log(raw);
-      setRaw(raw.values.slice(1));
+      setRaw(raw.values?.slice(1));
     };
     refresh();
     setInterval(refresh, 10000);
@@ -106,6 +105,7 @@ function App() {
         electionData.tent[value[1]][value[2]] = 0;
       }
       // cap the tent count at 100% of tent
+      console.log(value[1], popByTent[value[1]]);
       if (electionData.tent[value[1]][value[2]] < popByTent[value[1]]) {
         electionData.tent[value[1]][value[2]] += 1;
       }
@@ -191,12 +191,14 @@ function App() {
       setVoterData(voterData);
       const popByTent: {[key: string]: number} = {};
       voterData.forEach((voter: string[]) => {
-        if (!popByTent[voter[0]]) {
-          popByTent[voter[0]] = 0;
+        const sunbreakName = campingData.find((camp: string[]) => camp[1] === voter[0])?.[0];
+        if (!popByTent[sunbreakName]) {
+          popByTent[sunbreakName] = 0;
         }
-        popByTent[voter[0]] += 1;
+        popByTent[sunbreakName] += 1;
       });
       setPopByTent(popByTent);
+      console.log(popByTent);
 
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
       let map = new Map(document.getElementById("map") as HTMLElement, {
@@ -214,8 +216,11 @@ function App() {
         const tents = polygons.map((p: any) => {
           const location = p.name;
           // lookup camp name using camp location. polygon's "name" is e.g. SE 12
-          const campName = campingData.find((camp: string[]) => camp[1] === location)?.[0];
-          if (!campName) {
+          // col 1 is sunbreak name
+          // col 2 is discnw name (in voter data)
+          // col 3 is location (just a number this year, so split comparison to only that bit, e.g. SE 12 vs 12)
+          const campName = campingData.find((camp: string[]) => camp[2] === location.split(' ')[1])?.[0];
+          if (!campName || location === 'Aux 1 - NO CAMPING') {
             return null;
           }
           const coords = p.Polygon.outerBoundaryIs.LinearRing.coordinates;
@@ -302,7 +307,7 @@ function App() {
       <div className="mobileStack" style={{ display: 'flex', marginTop: '10px' }}>
         <div style={{width: "65vw", minWidth: '350px', height: '67vh'}} id="map" />
         <div style={{width: "35vw", minWidth: '350px', height: '67vh', overflowY: 'scroll'}} id="table">
-          <table className="table is-bordered" style={{ fontWeight: 400 }}>
+          <table className="table is-narrow" style={{ fontWeight: 400 }}>
             <thead>
             <tr>
               <th>Tent</th>
@@ -317,7 +322,7 @@ function App() {
               const {countOrlaf, countRobyn, percentRobyn, percentOrlaf, color, opacity, turnout} = getVisualData(tent.get('campName'));
               const bgColor = color.startsWith('rgb(') ? color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`) : color;
               return <tr key={tent.get('campName')}>
-                <td style={{ display: 'flex', gap: '4px' }}><div style={{ height: '20px', width: '20px', flexShrink: 0, backgroundColor: bgColor }}></div>{tent.get('campName')}</td>
+                <td><div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}><div style={{ height: '20px', width: '20px', flexShrink: 0, backgroundColor: bgColor }}></div><div>{tent.get('campName')} <span style={{ fontSize: 12, color: '#444444'}}>(pop. {popByTent[tent.get('campName')]})</span></div></div></td>
                 <td>{tent.get('campLocation')}</td>
                 <td>{countRobyn}<div style={{backgroundColor: blue, width: percentRobyn * 100 + '%', height: '6px'}}></div></td>
                 <td>{countOrlaf}<div style={{backgroundColor: red, width: percentOrlaf * 100 + '%', height: '6px' }}></div></td>
