@@ -38,7 +38,13 @@ async function getElectionData() {
     return await getFakeData();
   }
   // TODO add a caching layer
-  const votes = await (await fetch('https://sunbreakcache.hop.sh')).json();
+  let votes = {values: []};
+  try {
+    votes = await (await fetch('https://robynforpresident.onrender.com/')).json();
+  } catch (e) {
+    console.warn(e);
+    votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
+  }
   return votes;
 }
 
