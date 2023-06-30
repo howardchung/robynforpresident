@@ -13,8 +13,11 @@ async function run() {
 
     const output = [['header', 'header', 'header']];
     const voters = shuffle(fs.readFileSync('./public/voters.tsv').toString().split('\n'));
+    const camping = fs.readFileSync('./public/camping.tsv').toString().split('\n').map(line => line.split('\t'));
     for (let i = 0; i < voters.length; i++) {
-        output.push([Date.now(), voters[i].split('\t')[0], Math.random() < 0.6 ? 'Robyn' : 'Orlaf']);
+      const discNWName = voters[i].split('\t')[0];
+      const sunbreakName = camping.find(camp => camp[1] === discNWName)?.[0];
+      output.push([Date.now(), sunbreakName, Math.random() < 0.55 ? 'Robyn' : 'Orlaf']);
     }
     fs.writeFileSync('./public/fakeVotes.json', JSON.stringify(output, null, 2));
 }

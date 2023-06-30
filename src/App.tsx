@@ -6,8 +6,6 @@ import QRCode from "react-qr-code";
 import axios from 'axios';
 import React from 'react';
 
-// TODO final run of voting data
-
 const gradient = [
   'rgb(26, 106, 255)',
   'rgb(122, 94, 243)',
@@ -40,7 +38,7 @@ async function getElectionData() {
     return await getFakeData();
   }
   // TODO add a caching layer
-  const votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
+  const votes = await (await fetch('https://sunbreakcache.hop.sh')).json();
   return votes;
 }
 
