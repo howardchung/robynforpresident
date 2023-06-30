@@ -37,7 +37,6 @@ async function getElectionData() {
   if (window.location.search.includes('fakeData')) {
     return await getFakeData();
   }
-  // TODO add a caching layer
   let votes = {values: []};
   try {
     votes = await (await fetch('https://robynforpresident.onrender.com/')).json();
@@ -264,6 +263,23 @@ function App() {
   const percentRobyn = (electionData.overall?.['Robyn'] ?? 0) / totalVotes * 100;
   const percentOrlaf = (electionData.overall?.['Orlaf'] ?? 0) / totalVotes * 100;
   const maxVotes = voterData.length;
+  const [sort, setSort] = useState('location');
+  const sorted = [...tents].sort((a: google.maps.Polygon, b: google.maps.Polygon) => {
+    const aData = getVisualData(a.get('campName'));
+    const bData = getVisualData(b.get('campName'));
+    if (sort === 'tent') {
+      return a.get('campName')?.localeCompare(b.get('campName'));
+    } else if (sort === 'location') {
+      return a.get('campLocation')?.split(' ')?.[1] - b.get('campLocation')?.split(' ')?.[1];
+    } else if (sort === 'robyn') {
+      return bData.countRobyn - aData.countRobyn;
+    } else if (sort === 'orlaf') {
+      return bData.countOrlaf - aData.countOrlaf;
+    } else if (sort === 'turnout') {
+      return bData.turnout - aData.turnout;
+    }
+    return 0;
+  });
   return (
     <div className="App">
       <div className="mobileStack" style={{ display: 'flex', width: '95vw' }}>
@@ -314,15 +330,15 @@ function App() {
           <table className="table is-narrow" style={{ fontWeight: 400 }}>
             <thead>
             <tr>
-              <th>Tent</th>
-              <th>Location</th>
-              <th>Robyn</th>
-              <th>Orlaf</th>
-              <th>Turnout</th>
+              <th onClick={() => setSort('tent')}>Tent</th>
+              <th onClick={() => setSort('location')}>Location</th>
+              <th onClick={() => setSort('robyn')}>Robyn</th>
+              <th onClick={() => setSort('orlaf')}>Orlaf</th>
+              <th onClick={() => setSort('turnout')}>Turnout</th>
             </tr>
             </thead>
             <tbody>
-            {tents.sort().map((tent: google.maps.Polygon) => {
+            {sorted.map((tent: google.maps.Polygon) => {
               const {countOrlaf, countRobyn, percentRobyn, percentOrlaf, color, opacity, turnout} = getVisualData(tent.get('campName'));
               const bgColor = color.startsWith('rgb(') ? color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`) : color;
               return <tr key={tent.get('campName')}>
