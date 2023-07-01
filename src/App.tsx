@@ -94,24 +94,22 @@ function App() {
       }
     }
     raw.forEach((value: string[], i) => {
+      // cap the overall count at 100% of voters
+      // cap the tent count at 100% of tent
+      if (i >= voterData.length || electionData.tent?.[value[1]]?.[value[2]] >= popByTent[value[1]]) {
+        return;
+      }
       if (!electionData.overall?.[value[2]]) {
         electionData.overall[value[2]] = 0;
       }
-      // cap the overall count at 100% of voters
-      if (i < voterData.length) {
-        electionData.overall[value[2]] += 1;
-      }
+      electionData.overall[value[2]] += 1;
       if (!electionData.tent?.[value[1]]) {
         electionData.tent[value[1]] = {};
       }
       if (!electionData.tent?.[value[1]]?.[value[2]]) {
         electionData.tent[value[1]][value[2]] = 0;
       }
-      // cap the tent count at 100% of tent
-      console.log(value[1], popByTent[value[1]]);
-      if (electionData.tent[value[1]][value[2]] < popByTent[value[1]]) {
-        electionData.tent[value[1]][value[2]] += 1;
-      }
+      electionData.tent[value[1]][value[2]] += 1;
     });
     console.log(electionData);
     setElectionData(electionData);
