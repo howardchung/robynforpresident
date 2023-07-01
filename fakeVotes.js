@@ -11,7 +11,7 @@ async function run() {
         return array; 
       };
 
-    const output = [['header', 'header', 'header']];
+    const output = [];
     const voters = shuffle(fs.readFileSync('./public/voters.tsv').toString().split('\n'));
     const camping = fs.readFileSync('./public/camping.tsv').toString().split('\n').map(line => line.split('\t'));
     for (let i = 0; i < voters.length; i++) {

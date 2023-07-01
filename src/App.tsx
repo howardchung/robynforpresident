@@ -44,6 +44,7 @@ async function getElectionData() {
     console.warn(e);
     votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
   }
+  // Remove out of range votes and header row
   return votes.values.filter((vote: string[]) => new Date(vote[0]) > new Date('2023-06-29'));
 }
 
@@ -80,8 +81,7 @@ function App() {
     const refresh = async () => {
       const raw = await getElectionData();
       console.log(raw);
-      // Remove header
-      setRaw(raw.slice(1));
+      setRaw(raw);
     };
     refresh();
     setInterval(refresh, 10000);
@@ -201,7 +201,7 @@ function App() {
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
       let map = new Map(document.getElementById("map") as HTMLElement, {
         center: { lat: 47.90503556127053, lng: -122.08425859514236 },
-        zoom: 18.0,
+        zoom: window.screen.width < 600 ? 17.0 : 18.0,
       });
       const XMLdata = await (await fetch('./Sunbreak.kml')).text();
       const parser = new XMLParser();
