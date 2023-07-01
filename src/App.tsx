@@ -30,21 +30,21 @@ const getFakeData = async () => {
   const resp = await axios.get('./fakeVotes.json');
   const timestamp = Math.floor(Date.now() / 1000);
   const mod = timestamp % 1000;
-  return { values: resp.data.slice(0, 500 + mod / 2) };
+  return resp.data.slice(0, 500 + mod / 2);
 };
 
 async function getElectionData() {
   if (window.location.search.includes('fakeData')) {
     return await getFakeData();
   }
-  let votes = {values: []};
+  let votes = [];
   try {
     votes = await (await fetch('https://robynforpresident.onrender.com/')).json();
   } catch (e) {
     console.warn(e);
     votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
   }
-  return votes;
+  return votes.values.filter((vote: string[]) => new Date(vote[0]) > new Date('2023-06-29'));
 }
 
 type ElectionData = {
@@ -80,7 +80,8 @@ function App() {
     const refresh = async () => {
       const raw = await getElectionData();
       console.log(raw);
-      setRaw(raw.values?.slice(1));
+      // Remove header
+      setRaw(raw.slice(1));
     };
     refresh();
     setInterval(refresh, 10000);
@@ -173,10 +174,6 @@ function App() {
   }, [electionData, getVisualData, popByTent, tents]);
 
   const timerComponents = Object.keys(timeLeft).map(interval => {
-    if (!timeLeft[interval]) {
-      return null;
-    }
-
     return (
        <span key={interval}>
         {timeLeft[interval]} {interval}{" "}
@@ -295,7 +292,7 @@ function App() {
         <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', maxWidth: '10vw', maxHeight: '10vw', backgroundImage: 'url(./robyn.jpg)', backgroundSize: 'contain' }}></div>
         <div style={{ display: 'flex', flexDirection: 'column', width: 'calc(90vw - 20vw)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div className="mobileStack mobileReverse" style={{ }}>
+            <div className="mobileStack mobileReverse">
               <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 48, marginRight: 8, fontWeight: 700 }}>{electionData.overall?.['Robyn']?.toFixed(0) ?? 0}</span>
               <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 24, fontWeight: 500 }}>Robyn</span>
             </div>

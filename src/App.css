@@ -6,15 +6,13 @@
   margin: 1vw;
 }
 
-.mobileStack {
-  @media only screen and (max-width: 600px) {
-    display: flex;
-    flex-direction: column;
-  }
-}
+@media only screen and (max-width: 600px) {
+  .mobileStack {
+      display: flex;
+      flex-direction: column;
+    }
 
-.mobileReverse {
-  @media only screen and (max-width: 600px) {
+  .mobileReverse {
     flex-direction: column-reverse;
   }
 }
