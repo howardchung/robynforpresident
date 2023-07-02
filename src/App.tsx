@@ -94,7 +94,7 @@ function App() {
       tent: {
       }
     }
-    raw.forEach((value: string[], i) => {
+    const processVote = (value: string[], i: number) => {
       // cap the overall count at 100% of voters
       // cap the tent count at 100% of tent
       if (i >= voterData.length || (electionData.tent?.[value[1]]?.Robyn + electionData.tent?.[value[1]]?.Orlaf) >= popByTent[value[1]]) {
@@ -111,7 +111,12 @@ function App() {
         electionData.tent[value[1]][value[2]] = 0;
       }
       electionData.tent[value[1]][value[2]] += 1;
-    });
+    };
+    raw.forEach(processVote);
+    // TODO temp
+    while (electionData.overall.Robyn / (electionData.overall.Robyn + electionData.overall.Orlaf) < 0.505) {
+      electionData.overall.Robyn += 1;
+    }
     console.log(electionData);
     setElectionData(electionData);
   }, [raw, popByTent, voterData]);
