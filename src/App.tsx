@@ -113,10 +113,6 @@ function App() {
       electionData.tent[value[1]][value[2]] += 1;
     };
     raw.forEach(processVote);
-    // TODO temp
-    while (electionData.overall.Robyn / (electionData.overall.Robyn + electionData.overall.Orlaf) < 0.505) {
-      electionData.overall.Robyn += 1;
-    }
     console.log(electionData);
     setElectionData(electionData);
   }, [raw, popByTent, voterData]);
