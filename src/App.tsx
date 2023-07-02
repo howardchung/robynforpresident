@@ -292,13 +292,21 @@ function App() {
         <div style={{ backgroundColor: 'gray', borderRadius: '50%', width: '100px', height: '100px', maxWidth: '10vw', maxHeight: '10vw', backgroundImage: 'url(./robyn.jpg)', backgroundSize: 'contain' }}></div>
         <div style={{ display: 'flex', flexDirection: 'column', width: 'calc(90vw - 20vw)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div className="mobileStack mobileReverse">
-              <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 48, marginRight: 8, fontWeight: 700 }}>{electionData.overall?.['Robyn']?.toFixed(0) ?? 0}</span>
-              <span style={{ color: 'rgb(26, 106, 255)', textTransform: 'uppercase', fontSize: 24, fontWeight: 500 }}>Robyn</span>
+            <div style={{ color: 'rgb(26, 106, 255)' }} className="mobileStack mobileReverse">
+              <span style={{ textTransform: 'uppercase', fontSize: 48, marginRight: 8, fontWeight: 700 }}>{electionData.overall?.['Robyn']?.toFixed(0) ?? 0}</span>
+              <span style={{ textTransform: 'uppercase', fontSize: 24, fontWeight: 500, marginRight: 8 }}>Robyn</span>
+              {isElectionOver() && (percentRobyn > percentOrlaf) && <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-check-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+              </svg>}
             </div>
-            <div className="mobileStack" style={{ textAlign: 'right' }}>
-              <span style={{ color: 'rgb(255, 74, 67)', textTransform: 'uppercase', fontSize: 24, marginRight: 8, fontWeight: 500 }}>Orlaf</span>
-              <span style={{ color: 'rgb(255, 74, 67)', textTransform: 'uppercase', fontSize: 48, fontWeight: 700 }}>{electionData.overall?.['Orlaf']?.toFixed(0) ?? 0}</span>
+            <div style={{ color: 'rgb(255, 74, 67)', textAlign: 'right' }} className="mobileStack">
+              {isElectionOver() && (percentOrlaf > percentRobyn) && <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-check-circle" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+              </svg>}
+              <span style={{ textTransform: 'uppercase', fontSize: 24, marginLeft: 8, marginRight: 8, fontWeight: 500 }}>Orlaf</span>
+              <span style={{ textTransform: 'uppercase', fontSize: 48, fontWeight: 700 }}>{electionData.overall?.['Orlaf']?.toFixed(0) ?? 0}</span>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '-50px' }}>
@@ -364,4 +372,9 @@ function calculateTimeLeft() {
     };
 
   return timeLeft;
+}
+
+function isElectionOver() {
+  const left = calculateTimeLeft();
+  return Object.values(left).filter(Boolean).length === 0;
 }
