@@ -97,7 +97,7 @@ function App() {
     raw.forEach((value: string[], i) => {
       // cap the overall count at 100% of voters
       // cap the tent count at 100% of tent
-      if (i >= voterData.length || electionData.tent?.[value[1]]?.[value[2]] >= popByTent[value[1]]) {
+      if (i >= voterData.length || (electionData.tent?.[value[1]]?.Robyn + electionData.tent?.[value[1]]?.Orlaf) >= popByTent[value[1]]) {
         return;
       }
       if (!electionData.overall?.[value[2]]) {
