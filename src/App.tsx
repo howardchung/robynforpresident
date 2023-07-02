@@ -258,7 +258,7 @@ function App() {
   const percentRobyn = (electionData.overall?.['Robyn'] ?? 0) / totalVotes * 100;
   const percentOrlaf = (electionData.overall?.['Orlaf'] ?? 0) / totalVotes * 100;
   const maxVotes = voterData.length;
-  const [sort, setSort] = useState('location');
+  const [sort, setSort] = useState('turnout');
   const sorted = [...tents].sort((a: google.maps.Polygon, b: google.maps.Polygon) => {
     const aData = getVisualData(a.get('campName'));
     const bData = getVisualData(b.get('campName'));
