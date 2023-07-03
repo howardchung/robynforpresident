@@ -282,6 +282,7 @@ function App() {
         <div>
           <div className="is-size-2">Sunbreak Presidential Election 2023</div>
           <div className="is-size-4">Polls close in <span>{timerComponents}</span></div>
+          <a rel="noreferrer" target="_blank" href="https://github.com/howardchung/robynforpresident">Source on GitHub</a>
         </div>
         <div style={{ display: 'flex', marginLeft: 'auto'}}>
           <a rel="noreferrer" target="_blank" href="https://docs.google.com/forms/d/e/1FAIpQLSfSSJC2BYyNceue1Zt8IvJ5gq217xkN-O17YGw_P7zT5V11KA/viewform" className="is-size-4" style={{ fontWeight: 700, marginRight: '8px' }}>Vote:</a>
