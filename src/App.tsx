@@ -39,10 +39,11 @@ async function getElectionData() {
   }
   let votes = [];
   try {
-    votes = await (await fetch('https://robynforpresident.onrender.com/')).json();
+    votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
+    // votes = await (await fetch('https://robynforpresident.onrender.com/')).json();
   } catch (e) {
     console.warn(e);
-    votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
+    // votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
   }
   // Remove out of range votes and header row
   return votes.values.filter((vote: string[]) => new Date(vote[0]) > new Date('2023-06-29'));
