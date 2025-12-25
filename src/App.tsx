@@ -39,7 +39,7 @@ async function getElectionData() {
   }
   let votes = [];
   try {
-    votes = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201?key=AIzaSyDAHivgQUlxM9FKaTYuzfKpOKgf0f9hpXI')).json();
+    votes = await (await fetch('https://googlesheet.howardzchung.workers.dev?url=https://sheets.googleapis.com/v4/spreadsheets/1Ctj7ntWMhiDUiGTaXKXJG7C7sbYnA-IjDhyvf8NCPxE/values/Form%20Responses%201')).json();
     // votes = await (await fetch('https://robynforpresident.onrender.com/')).json();
   } catch (e) {
     console.warn(e);
