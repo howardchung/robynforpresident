@@ -22,8 +22,7 @@ const blue = gradient[0];
 const red = gradient[9];
 
 const loader = new Loader({
-  apiKey: "AIzaSyCS1nE3eGLvW_D5pAJQ9_iuuoC1lMNJ7ts",
-  version: "weekly",
+  apiKey: "AIzaSyCM2wpaF4vmvYotpeuINdWEZAdwMZsJ594",
 });
 
 const getFakeData = async () => {
